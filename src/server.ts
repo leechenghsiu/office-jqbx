@@ -4,9 +4,9 @@ const SPOTIFY_AUTH_URL = 'https://accounts.spotify.com/authorize';
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
 const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
 
-export function createServer(clientId: string, clientSecret: string, port: number) {
+export function createServer(clientId: string, clientSecret: string, port: number, baseUrl?: string) {
   const app = express();
-  const redirectUri = `http://127.0.0.1:${port}/callback`;
+  const redirectUri = baseUrl ? `${baseUrl}/callback` : `http://127.0.0.1:${port}/callback`;
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok' });

@@ -108,7 +108,7 @@ async function main() {
   await registerCommands(discordClientId, discordToken);
   await client.login(discordToken);
 
-  createServer(spotifyClientId, spotifyClientSecret, port);
+  createServer(spotifyClientId, spotifyClientSecret, port, process.env.BASE_URL);
 }
 
 main().catch(err => {
