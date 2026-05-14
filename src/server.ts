@@ -6,7 +6,7 @@ const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-cu
 
 export function createServer(clientId: string, clientSecret: string, port: number) {
   const app = express();
-  const redirectUri = `http://localhost:${port}/callback`;
+  const redirectUri = `http://127.0.0.1:${port}/callback`;
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok' });

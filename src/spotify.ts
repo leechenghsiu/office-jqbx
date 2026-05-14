@@ -89,6 +89,25 @@ export class SpotifyClient {
     return res.ok;
   }
 
+  async getDevices(): Promise<Array<{ id: string; name: string; type: string; isActive: boolean }>> {
+    const res = await this.request('GET', '/me/player/devices');
+    if (!res.ok) return [];
+    const data = await res.json() as {
+      devices: Array<{ id: string; name: string; type: string; is_active: boolean }>;
+    };
+    return data.devices.map(d => ({ id: d.id, name: d.name, type: d.type, isActive: d.is_active }));
+  }
+
+  async transferPlayback(deviceId: string): Promise<boolean> {
+    const res = await this.request('PUT', '/me/player', { device_ids: [deviceId], play: false });
+    return res.ok;
+  }
+
+  async pause(): Promise<boolean> {
+    const res = await this.request('PUT', '/me/player/pause');
+    return res.ok;
+  }
+
   async getCurrentlyPlaying(): Promise<{
     uri: string;
     title: string;

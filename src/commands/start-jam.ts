@@ -6,36 +6,33 @@ import {
   EmbedBuilder,
   type ChatInputCommandInteraction,
 } from 'discord.js';
-import { Rotation } from '../rotation.js';
 import { SpotifyClient } from '../spotify.js';
 
-export interface AddCallbacks {
-  isJamActive: () => boolean;
-  onFirstTrack: () => Promise<void>;
+export interface StartJamCallbacks {
+  onStarted: (channelId: string) => void;
 }
 
-export function addCommand(rotation: Rotation, spotify: SpotifyClient, callbacks: AddCallbacks) {
+export function startJamCommand(spotify: SpotifyClient, callbacks: StartJamCallbacks) {
   return async (interaction: ChatInputCommandInteraction) => {
-    const query = interaction.options.getString('query', true);
     await interaction.deferReply();
 
-    const results = await spotify.search(query);
-    if (results.length === 0) {
-      await interaction.editReply('No results found. Try a different search.');
+    const devices = await spotify.getDevices();
+    if (devices.length === 0) {
+      await interaction.editReply('⚠️ No Spotify devices found. Make sure Spotify is open on at least one device.');
       return;
     }
 
     const embed = new EmbedBuilder()
-      .setTitle(`🔍 Search: "${query}"`)
+      .setTitle('🔊 Select a device to start the Jam')
       .setDescription(
-        results.map((t, i) => `**${i + 1}.** ${t.title} — ${t.artist}`).join('\n'),
+        devices.map((d, i) => `**${i + 1}.** ${d.name} (${d.type})${d.isActive ? ' ✓ active' : ''}`).join('\n'),
       )
       .setColor(0x1DB954);
 
     const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      results.map((_, i) =>
+      devices.slice(0, 5).map((_, i) =>
         new ButtonBuilder()
-          .setCustomId(`add_${i}`)
+          .setCustomId(`device_${i}`)
           .setLabel(`${i + 1}`)
           .setStyle(ButtonStyle.Primary),
       ),
@@ -51,23 +48,21 @@ export function addCommand(rotation: Rotation, spotify: SpotifyClient, callbacks
       });
 
       const index = parseInt(btnInteraction.customId.split('_')[1]);
-      const track = { ...results[index], addedBy: interaction.user.id };
+      const device = devices[index];
 
-      if (!rotation.getDJs().some(dj => dj.userId === interaction.user.id)) {
-        rotation.join(interaction.user.id);
+      const ok = await spotify.transferPlayback(device.id);
+      if (!ok) {
+        await btnInteraction.update({ content: '⚠️ Failed to connect to device.', embeds: [], components: [] });
+        return;
       }
 
-      rotation.addTrack(interaction.user.id, track);
+      callbacks.onStarted(interaction.channelId);
 
       await btnInteraction.update({
-        content: `✅ Added **${track.title}** — ${track.artist} to your queue`,
+        content: `🎶 Jam started on **${device.name}**! Use \`/join\` and \`/add\` to queue songs.`,
         embeds: [],
         components: [],
       });
-
-      if (!rotation.getCurrentTrack() && callbacks.isJamActive()) {
-        await callbacks.onFirstTrack();
-      }
     } catch {
       await interaction.editReply({ content: 'Selection timed out.', embeds: [], components: [] });
     }

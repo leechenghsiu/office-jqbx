@@ -12,6 +12,8 @@ import { queueCommand } from './commands/queue.js';
 import { nowCommand } from './commands/now.js';
 import { skipCommand } from './commands/skip.js';
 import { djsCommand } from './commands/djs.js';
+import { startJamCommand } from './commands/start-jam.js';
+import { stopJamCommand } from './commands/stop-jam.js';
 
 const required = (name: string): string => {
   const val = process.env[name];
@@ -35,12 +37,18 @@ async function main() {
   const commands: Record<string, CommandHandler> = {
     join: joinCommand(rotation),
     leave: leaveCommand(rotation),
-    add: addCommand(rotation, spotify),
+    add: addCommand(rotation, spotify, { isJamActive: () => poller.isActive(), onFirstTrack: () => poller.playNext().then(() => {}) }),
     remove: removeCommand(rotation),
     queue: queueCommand(rotation),
     now: nowCommand(rotation, spotify),
     skip: skipCommand(rotation, { onSkip: () => poller.playNext().then(() => {}) }),
     djs: djsCommand(rotation),
+    'start-jam': startJamCommand(spotify, {
+      onStarted: (channelId) => { poller.setChannel(channelId); poller.start(); },
+    }),
+    'stop-jam': stopJamCommand(rotation, spotify, {
+      onStopped: () => { poller.stop(); },
+    }),
   };
 
   client.on(Events.InteractionCreate, async interaction => {
@@ -51,12 +59,14 @@ async function main() {
           await handler(interaction as ChatInputCommandInteraction);
         } catch (err) {
           console.error(`Command error (${interaction.commandName}):`, err);
-          const reply = { content: 'Something went wrong.', ephemeral: true };
-          if (interaction.replied || interaction.deferred) {
-            await interaction.followUp(reply);
-          } else {
-            await interaction.reply(reply);
-          }
+          try {
+            const reply = { content: 'Something went wrong.', ephemeral: true };
+            if (interaction.replied || interaction.deferred) {
+              await interaction.followUp(reply);
+            } else {
+              await interaction.reply(reply);
+            }
+          } catch {}
         }
       }
     }
@@ -93,13 +103,6 @@ async function main() {
 
   client.once(Events.ClientReady, async c => {
     console.log(`Logged in as ${c.user.tag}`);
-
-    const channel = c.channels.cache.find(ch => ch.isTextBased() && 'name' in ch && ch.name === 'music');
-    if (channel) {
-      poller.setChannel(channel.id);
-    }
-
-    poller.start();
   });
 
   await registerCommands(discordClientId, discordToken);

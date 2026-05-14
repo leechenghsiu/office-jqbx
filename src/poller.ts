@@ -13,6 +13,7 @@ export class Poller {
   private interval: ReturnType<typeof setInterval> | null = null;
   private lastUri: string | null = null;
   private channelId: string | null = null;
+  private active = false;
 
   constructor(
     private rotation: Rotation,
@@ -25,15 +26,23 @@ export class Poller {
   }
 
   start() {
+    if (this.interval) return;
+    this.active = true;
     this.interval = setInterval(() => this.poll(), 5000);
     console.log('Playback poller started');
   }
 
   stop() {
+    this.active = false;
     if (this.interval) {
       clearInterval(this.interval);
       this.interval = null;
     }
+    this.lastUri = null;
+  }
+
+  isActive(): boolean {
+    return this.active;
   }
 
   async playNext(): Promise<boolean> {

@@ -27,6 +27,8 @@ const commands = [
   new SlashCommandBuilder().setName('now').setDescription('Show the currently playing song'),
   new SlashCommandBuilder().setName('skip').setDescription('Vote to skip the current song'),
   new SlashCommandBuilder().setName('djs').setDescription('Show the DJ rotation'),
+  new SlashCommandBuilder().setName('start-jam').setDescription('Start the Jam — pick a device to play on'),
+  new SlashCommandBuilder().setName('stop-jam').setDescription('Stop the Jam and clear the rotation'),
 ];
 
 export async function registerCommands(clientId: string, token: string): Promise<void> {

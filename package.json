@@ -1,7 +1,7 @@
 {
-  "name": "office-dj-bot",
+  "name": "office-jqbx",
   "version": "1.0.0",
-  "description": "",
+  "description": "A Discord bot that brings the JQBX experience to your office",
   "main": "index.js",
   "directories": {
     "doc": "docs"

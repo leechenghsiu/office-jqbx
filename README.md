@@ -1,18 +1,22 @@
-# Office DJ Bot
+# Office JQBX
 
 A Discord bot that brings the JQBX experience to your office. Coworkers take turns as DJs, queue songs, and vote — all through Discord slash commands. Music plays on a shared device via Spotify.
 
 ## How It Works
 
 - One Spotify Premium account controls playback on a shared device (smart speaker, etc.)
+- `/start-jam` to pick a device and start the session
 - Coworkers join a **DJ rotation** in Discord
 - Each DJ queues their own songs — the bot plays them **round-robin**
 - Everyone can vote 🔥 (love it) or 👎 (skip it)
+- `/stop-jam` when done — your Spotify account is released
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
+| `/start-jam` | Start the Jam — pick a Spotify device to play on |
+| `/stop-jam` | Stop the Jam and clear the rotation |
 | `/join` | Join the DJ rotation |
 | `/leave` | Leave the DJ rotation |
 | `/add <song>` | Search and add a song to your queue |
@@ -34,8 +38,8 @@ A Discord bot that brings the JQBX experience to your office. Coworkers take tur
 ### 1. Clone and install
 
 ```bash
-git clone <your-repo-url>
-cd office-dj-bot
+git clone https://github.com/pyyupsk/office-jqbx.git
+cd office-jqbx
 npm install
 ```
 
@@ -53,7 +57,7 @@ npm install
 
 1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
 2. Create a new app
-3. Set the redirect URI to `http://localhost:3000/callback`
+3. Set the redirect URI to `http://127.0.0.1:3000/callback`
 4. Copy the **Client ID** and **Client Secret**
 
 ### 4. Get your Spotify refresh token
@@ -64,7 +68,7 @@ cp .env.example .env
 npm run build && node dist/index.js
 ```
 
-1. Open `http://localhost:3000/auth` in your browser
+1. Open `http://127.0.0.1:3000/auth` in your browser
 2. Log in with your Spotify Premium account
 3. Copy the refresh token from the page
 4. Set `SPOTIFY_REFRESH_TOKEN` in your `.env` (or Zeabur env vars)
@@ -78,11 +82,13 @@ npm start
 
 ### 6. Start playing
 
-1. Open Spotify on your device and start playing something (so the bot has an active device)
-2. Cast to your office speaker
-3. In Discord, run `/join` and `/add <song>` — the bot takes it from there
+1. In Discord, run `/start-jam` and select your office speaker
+2. `/join` the DJ rotation
+3. `/add <song>` to queue songs — the bot handles the rest
 
 ## Deploy to Zeabur
+
+[![Deploy on Zeabur](https://zeabur.com/button.svg)](https://zeabur.com/templates/office-jqbx)
 
 1. Push to a Git repo
 2. Create a new project on [Zeabur](https://zeabur.com)
