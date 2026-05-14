@@ -2,7 +2,7 @@ import express from 'express';
 
 const SPOTIFY_AUTH_URL = 'https://accounts.spotify.com/authorize';
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
-const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing';
+const SCOPES = 'user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private playlist-read-collaborative';
 
 export function createServer(clientId: string, clientSecret: string, port: number, baseUrl?: string) {
   const app = express();
