@@ -16,6 +16,10 @@ const commands = [
     .setName('add')
     .setDescription('Search and add a song to the queue')
     .addStringOption(opt => opt.setName('query').setDescription('Song name or artist').setRequired(true)),
+  new SlashCommandBuilder()
+    .setName('add-playlist')
+    .setDescription('Search and add a playlist to the queue')
+    .addStringOption(opt => opt.setName('query').setDescription('Playlist name (e.g. "This Is Justin Bieber")').setRequired(true)),
   new SlashCommandBuilder().setName('queue').setDescription('View the current queue'),
   new SlashCommandBuilder().setName('now').setDescription('Show the currently playing song'),
   new SlashCommandBuilder().setName('skip').setDescription('Skip the current song'),

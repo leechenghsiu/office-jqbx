@@ -80,6 +80,56 @@ export class SpotifyClient {
     }));
   }
 
+  async searchPlaylists(query: string, limit = 5): Promise<Array<{ id: string; name: string; owner: string; trackCount: number; image: string }>> {
+    const res = await this.request('GET', `/search?q=${encodeURIComponent(query)}&type=playlist&limit=${limit}`);
+    if (!res.ok) return [];
+
+    const data = await res.json() as {
+      playlists: {
+        items: Array<{
+          id: string;
+          name: string;
+          owner: { display_name: string };
+          tracks: { total: number };
+          images: Array<{ url: string }>;
+        }>;
+      };
+    };
+
+    return data.playlists.items.map(p => ({
+      id: p.id,
+      name: p.name,
+      owner: p.owner.display_name,
+      trackCount: p.tracks.total,
+      image: p.images[0]?.url ?? '',
+    }));
+  }
+
+  async getPlaylistTracks(playlistId: string, limit = 50): Promise<Track[]> {
+    const res = await this.request('GET', `/playlists/${playlistId}/tracks?limit=${limit}&fields=items(track(uri,name,artists(name),album(images)))`);
+    if (!res.ok) return [];
+
+    const data = await res.json() as {
+      items: Array<{
+        track: {
+          uri: string;
+          name: string;
+          artists: Array<{ name: string }>;
+          album: { images: Array<{ url: string }> };
+        } | null;
+      }>;
+    };
+
+    return data.items
+      .filter(item => item.track !== null)
+      .map(item => ({
+        uri: item.track!.uri,
+        title: item.track!.name,
+        artist: item.track!.artists.map(a => a.name).join(', '),
+        albumArt: item.track!.album.images[0]?.url ?? '',
+      }));
+  }
+
   async addToQueue(uri: string): Promise<boolean> {
     const res = await this.request('POST', `/me/player/queue?uri=${encodeURIComponent(uri)}`);
     return res.ok;
