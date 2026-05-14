@@ -117,57 +117,6 @@ export class SpotifyClient {
       }));
   }
 
-  async searchPlaylists(query: string, limit = 5): Promise<Array<{ id: string; name: string; owner: string; trackCount: number; image: string }>> {
-    const res = await this.request('GET', `/search?q=${encodeURIComponent(query)}&type=playlist&limit=20`);
-    if (!res.ok) return [];
-
-    const data = await res.json() as {
-      playlists: {
-        items: Array<{
-          id: string;
-          name: string;
-          owner: { display_name: string };
-          tracks: { total: number };
-          images: Array<{ url: string }>;
-        }>;
-      };
-    };
-
-    return data.playlists.items
-      .filter(p => p?.id && p?.name)
-      .slice(0, limit)
-      .map(p => ({
-        id: p.id,
-        name: p.name,
-        owner: p.owner?.display_name ?? 'Unknown',
-        trackCount: p.tracks?.total ?? 0,
-        image: p.images?.[0]?.url ?? '',
-      }));
-  }
-
-  async getPlaylistTracks(playlistId: string): Promise<Track[]> {
-    const res = await this.request('GET', `/playlists/${playlistId}`);
-    if (!res.ok) return [];
-
-    const data = await res.json() as Record<string, unknown>;
-    const container = (data.items ?? data.tracks) as { items?: Array<Record<string, unknown>> } | undefined;
-    const items = container?.items ?? [];
-
-    return items
-      .map(entry => {
-        const t = (entry as { item?: Record<string, unknown>; track?: Record<string, unknown> }).item
-          ?? (entry as { track?: Record<string, unknown> }).track;
-        if (!t || !(t as { uri?: string }).uri) return null;
-        const track = t as { uri: string; name: string; artists: Array<{ name: string }>; album: { images: Array<{ url: string }> } };
-        return {
-          uri: track.uri,
-          title: track.name,
-          artist: track.artists?.map(a => a.name).join(', ') ?? '',
-          albumArt: track.album?.images?.[0]?.url ?? '',
-        };
-      })
-      .filter((t): t is Track => t !== null);
-  }
 
   async addToQueue(uri: string): Promise<boolean> {
     const res = await this.request('POST', `/me/player/queue?uri=${encodeURIComponent(uri)}`);

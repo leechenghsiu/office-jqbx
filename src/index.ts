@@ -4,7 +4,6 @@ import { SpotifyClient } from './spotify.js';
 import { createServer } from './server.js';
 import { addCommand } from './commands/add.js';
 import { addArtistCommand } from './commands/add-artist.js';
-import { addPlaylistCommand } from './commands/add-playlist.js';
 import { queueCommand } from './commands/queue.js';
 import { nowCommand } from './commands/now.js';
 import { skipCommand } from './commands/skip.js';
@@ -40,7 +39,6 @@ async function main() {
   const commands: Record<string, CommandHandler> = {
     add: addCommand(spotify),
     'add-artist': addArtistCommand(spotify),
-    'add-playlist': addPlaylistCommand(spotify),
     queue: queueCommand(spotify),
     now: nowCommand(spotify),
     skip: skipCommand(spotify),

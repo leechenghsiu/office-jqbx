@@ -17,19 +17,10 @@ A Discord bot that lets your office share a Spotify queue. Anyone can add songs 
 | `/start-jam` | Start the Jam — pick a Spotify device to play on |
 | `/stop-jam` | Stop the Jam |
 | `/add <song>` | Search and add a song to the queue |
-| `/add-playlist <query or link>` | Add an entire playlist to the queue |
+| `/add-artist <artist>` | Add 10 songs by an artist to the queue |
 | `/queue` | View the current queue |
 | `/now` | See what's currently playing |
 | `/skip` | Skip the current song |
-
-### Adding Playlists
-
-`/add-playlist` supports two modes:
-
-- **Paste a Spotify link** (recommended): `/add-playlist https://open.spotify.com/playlist/37i9dQZF1DZ06evO0EEieE`
-- **Search by name**: `/add-playlist This Is Zedd`
-
-> **Note:** Spotify's search API returns different results than the Spotify app. Official editorial playlists (like the "This Is" series) may not appear in search. For best results, copy the playlist link from the Spotify app and paste it directly.
 
 ## Setup
 
