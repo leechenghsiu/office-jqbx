@@ -90,7 +90,7 @@ export class SpotifyClient {
     }));
   }
 
-  async searchArtistTracks(artistName: string, limit = 10): Promise<Track[]> {
+  async searchArtistTracks(artistName: string, limit = 20): Promise<Track[]> {
     return this.search(`artist:${artistName}`, limit);
   }
 
