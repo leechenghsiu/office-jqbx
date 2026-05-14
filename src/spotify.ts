@@ -90,6 +90,33 @@ export class SpotifyClient {
     }));
   }
 
+  async searchArtistTracks(artistName: string, limit = 10): Promise<Track[]> {
+    return this.search(`artist:${artistName}`, limit);
+  }
+
+  async searchArtists(query: string, limit = 5): Promise<Array<{ id: string; name: string; image: string }>> {
+    const res = await this.request('GET', `/search?q=${encodeURIComponent(query)}&type=artist&limit=${limit}`);
+    if (!res.ok) return [];
+
+    const data = await res.json() as {
+      artists: {
+        items: Array<{
+          id: string;
+          name: string;
+          images: Array<{ url: string }>;
+        }>;
+      };
+    };
+
+    return data.artists.items
+      .filter(a => a?.id && a?.name)
+      .map(a => ({
+        id: a.id,
+        name: a.name,
+        image: a.images?.[0]?.url ?? '',
+      }));
+  }
+
   async searchPlaylists(query: string, limit = 5): Promise<Array<{ id: string; name: string; owner: string; trackCount: number; image: string }>> {
     const res = await this.request('GET', `/search?q=${encodeURIComponent(query)}&type=playlist&limit=20`);
     if (!res.ok) return [];
