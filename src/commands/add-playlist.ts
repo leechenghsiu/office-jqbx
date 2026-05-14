@@ -1,7 +1,6 @@
 import {
   ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
+  StringSelectMenuBuilder,
   ComponentType,
   EmbedBuilder,
   type ChatInputCommandInteraction,
@@ -15,45 +14,54 @@ export function addPlaylistCommand(spotify: SpotifyClient) {
 
     const playlists = await spotify.searchPlaylists(query);
     if (playlists.length === 0) {
-      await interaction.editReply('No playlists found. Try a different search.');
+      const embed = new EmbedBuilder()
+        .setDescription('No playlists found. Try a different search.')
+        .setColor(0xED4245);
+      await interaction.editReply({ embeds: [embed] });
       return;
     }
 
     const embed = new EmbedBuilder()
-      .setTitle(`🔍 Playlists: "${query}"`)
+      .setAuthor({ name: 'Choose a playlist to add' })
       .setDescription(
-        playlists.map((p, i) => `**${i + 1}.** ${p.name} — by ${p.owner} (${p.trackCount} songs)`).join('\n'),
+        playlists.map((p, i) => `\`${i + 1}\` **${p.name}**\n╰ by ${p.owner} · ${p.trackCount} songs`).join('\n\n'),
       )
-      .setColor(0x1DB954);
+      .setThumbnail(playlists[0].image || null)
+      .setColor(0x1DB954)
+      .setFooter({ text: `Search: "${query}"` });
 
-    if (playlists[0].image) embed.setThumbnail(playlists[0].image);
-
-    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      playlists.map((_, i) =>
-        new ButtonBuilder()
-          .setCustomId(`playlist_${i}`)
-          .setLabel(`${i + 1}`)
-          .setStyle(ButtonStyle.Primary),
-      ),
+    const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('playlist_select')
+        .setPlaceholder('Select a playlist...')
+        .addOptions(
+          playlists.map((p, i) => ({
+            label: p.name.slice(0, 100),
+            description: `by ${p.owner} · ${p.trackCount} songs`.slice(0, 100),
+            value: String(i),
+          })),
+        ),
     );
 
     const reply = await interaction.editReply({ embeds: [embed], components: [row] });
 
     try {
-      const btnInteraction = await reply.awaitMessageComponent({
-        componentType: ComponentType.Button,
+      const selectInteraction = await reply.awaitMessageComponent({
+        componentType: ComponentType.StringSelect,
         filter: i => i.user.id === interaction.user.id,
         time: 30_000,
       });
 
-      const index = parseInt(btnInteraction.customId.split('_')[1]);
+      const index = parseInt(selectInteraction.values[0]);
       const playlist = playlists[index];
 
-      await btnInteraction.update({
-        content: `⏳ Adding **${playlist.name}** to queue...`,
-        embeds: [],
-        components: [],
-      });
+      const loadingEmbed = new EmbedBuilder()
+        .setAuthor({ name: 'Adding playlist...' })
+        .setDescription(`**${playlist.name}**\nLoading tracks...`)
+        .setThumbnail(playlist.image || null)
+        .setColor(0xFEE75C);
+
+      await selectInteraction.update({ embeds: [loadingEmbed], components: [] });
 
       const tracks = await spotify.getPlaylistTracks(playlist.id);
       let added = 0;
@@ -62,9 +70,18 @@ export function addPlaylistCommand(spotify: SpotifyClient) {
         if (ok) added++;
       }
 
-      await interaction.editReply(`✅ Added **${added}** songs from **${playlist.name}** to the queue`);
+      const resultEmbed = new EmbedBuilder()
+        .setAuthor({ name: 'Playlist added to queue' })
+        .setDescription(`**${playlist.name}**\n${added} songs added`)
+        .setThumbnail(playlist.image || null)
+        .setColor(0x1DB954);
+
+      await interaction.editReply({ embeds: [resultEmbed] });
     } catch {
-      await interaction.editReply({ content: 'Selection timed out.', embeds: [], components: [] });
+      const embed = new EmbedBuilder()
+        .setDescription('Selection timed out.')
+        .setColor(0x95A5A6);
+      await interaction.editReply({ embeds: [embed], components: [] });
     }
   };
 }

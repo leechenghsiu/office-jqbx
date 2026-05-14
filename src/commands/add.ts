@@ -1,7 +1,6 @@
 import {
   ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
+  StringSelectMenuBuilder,
   ComponentType,
   EmbedBuilder,
   type ChatInputCommandInteraction,
@@ -15,54 +14,65 @@ export function addCommand(spotify: SpotifyClient) {
 
     const results = await spotify.search(query);
     if (results.length === 0) {
-      await interaction.editReply('No results found. Try a different search.');
+      const embed = new EmbedBuilder()
+        .setDescription('No results found. Try a different search.')
+        .setColor(0xED4245);
+      await interaction.editReply({ embeds: [embed] });
       return;
     }
 
     const embed = new EmbedBuilder()
-      .setTitle(`🔍 Search: "${query}"`)
+      .setAuthor({ name: 'Choose a song to add' })
       .setDescription(
-        results.map((t, i) => `**${i + 1}.** ${t.title} — ${t.artist}`).join('\n'),
+        results.map((t, i) => `\`${i + 1}\` **${t.title}**\n╰ ${t.artist}`).join('\n\n'),
       )
-      .setColor(0x1DB954);
+      .setThumbnail(results[0].albumArt || null)
+      .setColor(0x1DB954)
+      .setFooter({ text: `Search: "${query}"` });
 
-    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
-      results.map((_, i) =>
-        new ButtonBuilder()
-          .setCustomId(`add_${i}`)
-          .setLabel(`${i + 1}`)
-          .setStyle(ButtonStyle.Primary),
-      ),
+    const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+      new StringSelectMenuBuilder()
+        .setCustomId('add_select')
+        .setPlaceholder('Select a song...')
+        .addOptions(
+          results.map((t, i) => ({
+            label: t.title.slice(0, 100),
+            description: t.artist.slice(0, 100),
+            value: String(i),
+          })),
+        ),
     );
 
     const reply = await interaction.editReply({ embeds: [embed], components: [row] });
 
     try {
-      const btnInteraction = await reply.awaitMessageComponent({
-        componentType: ComponentType.Button,
+      const selectInteraction = await reply.awaitMessageComponent({
+        componentType: ComponentType.StringSelect,
         filter: i => i.user.id === interaction.user.id,
         time: 30_000,
       });
 
-      const index = parseInt(btnInteraction.customId.split('_')[1]);
+      const index = parseInt(selectInteraction.values[0]);
       const track = results[index];
 
       const ok = await spotify.addToQueue(track.uri);
+      const resultEmbed = new EmbedBuilder().setColor(ok ? 0x1DB954 : 0xED4245);
+
       if (ok) {
-        await btnInteraction.update({
-          content: `✅ Added **${track.title}** — ${track.artist} to the queue`,
-          embeds: [],
-          components: [],
-        });
+        resultEmbed
+          .setAuthor({ name: 'Added to queue' })
+          .setDescription(`**${track.title}**\n${track.artist}`)
+          .setThumbnail(track.albumArt || null);
       } else {
-        await btnInteraction.update({
-          content: '⚠️ Failed to add to queue. Is Spotify active on a device? Use `/start-jam` first.',
-          embeds: [],
-          components: [],
-        });
+        resultEmbed.setDescription('Failed to add to queue. Use `/start-jam` first.');
       }
+
+      await selectInteraction.update({ embeds: [resultEmbed], components: [] });
     } catch {
-      await interaction.editReply({ content: 'Selection timed out.', embeds: [], components: [] });
+      const embed = new EmbedBuilder()
+        .setDescription('Selection timed out.')
+        .setColor(0x95A5A6);
+      await interaction.editReply({ embeds: [embed], components: [] });
     }
   };
 }

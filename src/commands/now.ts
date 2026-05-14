@@ -7,29 +7,32 @@ export function nowCommand(spotify: SpotifyClient) {
 
     const playback = await spotify.getCurrentlyPlaying();
     if (!playback) {
-      await interaction.editReply('Nothing is playing right now. Use `/start-jam` to begin!');
+      const embed = new EmbedBuilder()
+        .setDescription('Nothing is playing right now. Use `/start-jam` to begin!')
+        .setColor(0x95A5A6);
+      await interaction.editReply({ embeds: [embed] });
       return;
     }
 
-    const { track, progressMs, durationMs } = playback;
-    const progressBar = formatProgress(progressMs, durationMs);
+    const { track, progressMs, durationMs, isPlaying } = playback;
 
     const embed = new EmbedBuilder()
+      .setAuthor({ name: isPlaying ? 'Now Playing' : 'Paused' })
       .setTitle(track.title)
-      .setDescription(`by **${track.artist}**`)
-      .addFields({ name: 'Progress', value: progressBar })
-      .setColor(0x1DB954);
+      .setDescription(track.artist)
+      .addFields({ name: '​', value: formatProgress(progressMs, durationMs) })
+      .setColor(isPlaying ? 0x1DB954 : 0xFEE75C);
 
-    if (track.albumArt) embed.setThumbnail(track.albumArt);
+    if (track.albumArt) embed.setImage(track.albumArt);
 
     await interaction.editReply({ embeds: [embed] });
   };
 }
 
 function formatProgress(progressMs: number, durationMs: number): string {
-  const barLength = 20;
+  const barLength = 16;
   const filled = Math.round((progressMs / durationMs) * barLength);
-  const bar = '▓'.repeat(filled) + '░'.repeat(barLength - filled);
+  const bar = '▬'.repeat(filled) + '🔘' + '▬'.repeat(barLength - filled);
   return `${formatTime(progressMs)} ${bar} ${formatTime(durationMs)}`;
 }
 
