@@ -97,7 +97,7 @@ export class SpotifyClient {
     };
 
     return data.playlists.items
-      .filter(p => p?.id && p?.name && (p.tracks?.total ?? 0) > 0)
+      .filter(p => p?.id && p?.name)
       .slice(0, limit)
       .map(p => ({
         id: p.id,
