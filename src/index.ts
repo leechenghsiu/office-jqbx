@@ -50,10 +50,12 @@ async function main() {
     if (interaction.isChatInputCommand()) {
       const handler = commands[interaction.commandName];
       if (handler) {
+        const args = interaction.options.data.map(o => `${o.name}=${o.value}`).join(' ');
+        console.log(`[Command] /${interaction.commandName} ${args} (by ${interaction.user.tag})`);
         try {
           await handler(interaction as ChatInputCommandInteraction);
         } catch (err) {
-          console.error(`Command error (${interaction.commandName}):`, err);
+          console.error(`[Command] /${interaction.commandName} FAILED:`, err);
           try {
             const reply = { content: 'Something went wrong.', ephemeral: true };
             if (interaction.replied || interaction.deferred) {

@@ -47,7 +47,8 @@ export class SpotifyClient {
       await this.refreshAccessToken();
     }
 
-    return fetch(`${SPOTIFY_API}${endpoint}`, {
+    const url = `${SPOTIFY_API}${endpoint}`;
+    const res = await fetch(url, {
       method,
       headers: {
         Authorization: `Bearer ${this.accessToken}`,
@@ -55,6 +56,15 @@ export class SpotifyClient {
       },
       body: body ? JSON.stringify(body) : undefined,
     });
+
+    if (!res.ok) {
+      const text = await res.clone().text().catch(() => '');
+      console.error(`[Spotify] ${method} ${endpoint} → ${res.status} ${text}`);
+    } else {
+      console.log(`[Spotify] ${method} ${endpoint} → ${res.status}`);
+    }
+
+    return res;
   }
 
   async search(query: string, limit = 5): Promise<Track[]> {
