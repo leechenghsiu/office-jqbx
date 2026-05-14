@@ -16,15 +16,11 @@ A Discord bot that brings the JQBX experience to your office. Coworkers take tur
 | Command | Description |
 |---------|-------------|
 | `/start-jam` | Start the Jam — pick a Spotify device to play on |
-| `/stop-jam` | Stop the Jam and clear the rotation |
-| `/join` | Join the DJ rotation |
-| `/leave` | Leave the DJ rotation |
-| `/add <song>` | Search and add a song to your queue |
-| `/remove <number>` | Remove a song from your queue |
-| `/queue` | View your queued songs |
+| `/stop-jam` | Stop the Jam |
+| `/add <song>` | Search and add a song to the queue |
+| `/queue` | View the current queue |
 | `/now` | See what's currently playing |
-| `/skip` | Vote to skip the current song |
-| `/djs` | See the DJ rotation |
+| `/skip` | Skip the current song |
 
 ## Setup
 

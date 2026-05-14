@@ -8,11 +8,7 @@ import {
 } from 'discord.js';
 import { SpotifyClient } from '../spotify.js';
 
-export interface StartJamCallbacks {
-  onStarted: (channelId: string) => void;
-}
-
-export function startJamCommand(spotify: SpotifyClient, callbacks: StartJamCallbacks) {
+export function startJamCommand(spotify: SpotifyClient) {
   return async (interaction: ChatInputCommandInteraction) => {
     await interaction.deferReply();
 
@@ -56,10 +52,8 @@ export function startJamCommand(spotify: SpotifyClient, callbacks: StartJamCallb
         return;
       }
 
-      callbacks.onStarted(interaction.channelId);
-
       await btnInteraction.update({
-        content: `🎶 Jam started on **${device.name}**! Use \`/join\` and \`/add\` to queue songs.`,
+        content: `🎶 Jam started on **${device.name}**! Use \`/add\` to queue songs.`,
         embeds: [],
         components: [],
       });

@@ -1,8 +1,12 @@
-// src/spotify.ts
-import { Track } from './rotation.js';
-
 const SPOTIFY_API = 'https://api.spotify.com/v1';
 const TOKEN_URL = 'https://accounts.spotify.com/api/token';
+
+export interface Track {
+  uri: string;
+  title: string;
+  artist: string;
+  albumArt: string;
+}
 
 export class SpotifyClient {
   private accessToken = '';
@@ -43,7 +47,7 @@ export class SpotifyClient {
       await this.refreshAccessToken();
     }
 
-    const res = await fetch(`${SPOTIFY_API}${endpoint}`, {
+    return fetch(`${SPOTIFY_API}${endpoint}`, {
       method,
       headers: {
         Authorization: `Bearer ${this.accessToken}`,
@@ -51,8 +55,6 @@ export class SpotifyClient {
       },
       body: body ? JSON.stringify(body) : undefined,
     });
-
-    return res;
   }
 
   async search(query: string, limit = 5): Promise<Track[]> {
@@ -75,13 +77,34 @@ export class SpotifyClient {
       title: item.name,
       artist: item.artists.map(a => a.name).join(', '),
       albumArt: item.album.images[0]?.url ?? '',
-      addedBy: '',
     }));
   }
 
-  async play(uri: string): Promise<boolean> {
-    const res = await this.request('PUT', '/me/player/play', { uris: [uri] });
+  async addToQueue(uri: string): Promise<boolean> {
+    const res = await this.request('POST', `/me/player/queue?uri=${encodeURIComponent(uri)}`);
     return res.ok;
+  }
+
+  async getQueue(): Promise<{ currentlyPlaying: Track | null; queue: Track[] }> {
+    const res = await this.request('GET', '/me/player/queue');
+    if (!res.ok) return { currentlyPlaying: null, queue: [] };
+
+    const data = await res.json() as {
+      currently_playing: { uri: string; name: string; artists: Array<{ name: string }>; album: { images: Array<{ url: string }> } } | null;
+      queue: Array<{ uri: string; name: string; artists: Array<{ name: string }>; album: { images: Array<{ url: string }> } }>;
+    };
+
+    const mapTrack = (t: { uri: string; name: string; artists: Array<{ name: string }>; album: { images: Array<{ url: string }> } }): Track => ({
+      uri: t.uri,
+      title: t.name,
+      artist: t.artists.map(a => a.name).join(', '),
+      albumArt: t.album.images[0]?.url ?? '',
+    });
+
+    return {
+      currentlyPlaying: data.currently_playing ? mapTrack(data.currently_playing) : null,
+      queue: data.queue.map(mapTrack),
+    };
   }
 
   async skip(): Promise<boolean> {
@@ -109,10 +132,7 @@ export class SpotifyClient {
   }
 
   async getCurrentlyPlaying(): Promise<{
-    uri: string;
-    title: string;
-    artist: string;
-    albumArt: string;
+    track: Track;
     progressMs: number;
     durationMs: number;
     isPlaying: boolean;
@@ -135,10 +155,12 @@ export class SpotifyClient {
     if (!data.item) return null;
 
     return {
-      uri: data.item.uri,
-      title: data.item.name,
-      artist: data.item.artists.map(a => a.name).join(', '),
-      albumArt: data.item.album.images[0]?.url ?? '',
+      track: {
+        uri: data.item.uri,
+        title: data.item.name,
+        artist: data.item.artists.map(a => a.name).join(', '),
+        albumArt: data.item.album.images[0]?.url ?? '',
+      },
       progressMs: data.progress_ms,
       durationMs: data.item.duration_ms,
       isPlaying: data.is_playing,

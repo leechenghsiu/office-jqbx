@@ -1,23 +1,40 @@
 import { EmbedBuilder, type ChatInputCommandInteraction } from 'discord.js';
-import { Rotation } from '../rotation.js';
+import { SpotifyClient } from '../spotify.js';
 
-export function queueCommand(rotation: Rotation) {
+export function queueCommand(spotify: SpotifyClient) {
   return async (interaction: ChatInputCommandInteraction) => {
-    const queue = rotation.getQueue(interaction.user.id);
+    await interaction.deferReply();
 
-    if (queue.length === 0) {
-      await interaction.reply({ content: 'Your queue is empty. Use `/add` to add songs!', ephemeral: true });
+    const { currentlyPlaying, queue } = await spotify.getQueue();
+
+    if (!currentlyPlaying && queue.length === 0) {
+      await interaction.editReply('Nothing in the queue. Use `/add` to add songs!');
       return;
     }
 
-    const lines = queue.map((t, i) => `**${i + 1}.** ${t.title} — ${t.artist}`);
+    const lines: string[] = [];
+    if (currentlyPlaying) {
+      lines.push(`▶ **${currentlyPlaying.title}** — ${currentlyPlaying.artist}`);
+    }
+
+    const upcoming = queue.slice(0, 10);
+    if (upcoming.length > 0) {
+      lines.push('', '**Up next:**');
+      upcoming.forEach((t, i) => {
+        lines.push(`${i + 1}. ${t.title} — ${t.artist}`);
+      });
+      if (queue.length > 10) {
+        lines.push(`...and ${queue.length - 10} more`);
+      }
+    }
 
     const embed = new EmbedBuilder()
-      .setTitle('🎵 Your DJ Queue')
+      .setTitle('🎵 Queue')
       .setDescription(lines.join('\n'))
-      .setFooter({ text: `${queue.length} song${queue.length !== 1 ? 's' : ''}` })
       .setColor(0x1DB954);
 
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    if (currentlyPlaying?.albumArt) embed.setThumbnail(currentlyPlaying.albumArt);
+
+    await interaction.editReply({ embeds: [embed] });
   };
 }
