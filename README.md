@@ -1,14 +1,13 @@
 # Office JQBX
 
-A Discord bot that brings the JQBX experience to your office. Coworkers take turns as DJs, queue songs, and vote — all through Discord slash commands. Music plays on a shared device via Spotify.
+A Discord bot that lets your office share a Spotify queue. Anyone can add songs or playlists through Discord — music plays on a shared device like a smart speaker.
 
 ## How It Works
 
 - One Spotify Premium account controls playback on a shared device (smart speaker, etc.)
 - `/start-jam` to pick a device and start the session
-- Coworkers join a **DJ rotation** in Discord
-- Each DJ queues their own songs — the bot plays them **round-robin**
-- Everyone can vote 🔥 (love it) or 👎 (skip it)
+- Anyone can `/add` songs or `/add-playlist` entire playlists to the shared queue
+- When the queue runs out, Spotify autoplay kicks in — music never stops
 - `/stop-jam` when done — your Spotify account is released
 
 ## Commands
@@ -18,9 +17,19 @@ A Discord bot that brings the JQBX experience to your office. Coworkers take tur
 | `/start-jam` | Start the Jam — pick a Spotify device to play on |
 | `/stop-jam` | Stop the Jam |
 | `/add <song>` | Search and add a song to the queue |
+| `/add-playlist <query or link>` | Add an entire playlist to the queue |
 | `/queue` | View the current queue |
 | `/now` | See what's currently playing |
 | `/skip` | Skip the current song |
+
+### Adding Playlists
+
+`/add-playlist` supports two modes:
+
+- **Paste a Spotify link** (recommended): `/add-playlist https://open.spotify.com/playlist/37i9dQZF1DZ06evO0EEieE`
+- **Search by name**: `/add-playlist This Is Zedd`
+
+> **Note:** Spotify's search API returns different results than the Spotify app. Official editorial playlists (like the "This Is" series) may not appear in search. For best results, copy the playlist link from the Spotify app and paste it directly.
 
 ## Setup
 
@@ -34,7 +43,7 @@ A Discord bot that brings the JQBX experience to your office. Coworkers take tur
 ### 1. Clone and install
 
 ```bash
-git clone https://github.com/pyyupsk/office-jqbx.git
+git clone https://github.com/leechenghsiu/office-jqbx.git
 cd office-jqbx
 npm install
 ```
@@ -44,30 +53,44 @@ npm install
 1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
 2. Create a new application
 3. Go to **Bot** → **Reset Token** → copy the token
-4. Go to **OAuth2** → **URL Generator**
+4. Go to **Installation** → Default Install Settings → Guild Install
    - Scopes: `bot`, `applications.commands`
    - Bot Permissions: `Send Messages`, `Embed Links`, `Use Slash Commands`
-5. Open the generated URL to invite the bot to your server
+5. Copy the install link and open it to invite the bot to your server
 
 ### 3. Create a Spotify app
 
 1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
 2. Create a new app
-3. Set the redirect URI to `http://127.0.0.1:3000/callback`
+3. Set the redirect URI to `http://127.0.0.1:3000/callback` (for local) or `https://your-app.zeabur.app/callback` (for cloud)
 4. Copy the **Client ID** and **Client Secret**
 
 ### 4. Get your Spotify refresh token
 
+You can get the refresh token in two ways:
+
+**Option A: Cloud setup (Zeabur)**
+
+1. Deploy the service with only `SPOTIFY_CLIENT_ID`, `SPOTIFY_CLIENT_SECRET`, and `BASE_URL` set
+2. The bot starts in setup mode — visit `https://your-app.zeabur.app/auth`
+3. Authorize with your Spotify Premium account
+4. Copy the refresh token and add it as `SPOTIFY_REFRESH_TOKEN` in Zeabur env vars
+5. Add `DISCORD_TOKEN` and `DISCORD_CLIENT_ID`, the service restarts and goes live
+
+**Option B: Local setup**
+
 ```bash
 cp .env.example .env
-# Fill in DISCORD_TOKEN, DISCORD_CLIENT_ID, SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET
+# Fill in SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET
 npm run build && node dist/index.js
 ```
 
 1. Open `http://127.0.0.1:3000/auth` in your browser
 2. Log in with your Spotify Premium account
 3. Copy the refresh token from the page
-4. Set `SPOTIFY_REFRESH_TOKEN` in your `.env` (or Zeabur env vars)
+4. Set `SPOTIFY_REFRESH_TOKEN` in your `.env`
+
+> The refresh token does not expire unless you revoke the app or change your Spotify password.
 
 ### 5. Run
 
@@ -78,9 +101,21 @@ npm start
 
 ### 6. Start playing
 
-1. In Discord, run `/start-jam` and select your office speaker
-2. `/join` the DJ rotation
-3. `/add <song>` to queue songs — the bot handles the rest
+1. Open Spotify on any device (phone, laptop, smart speaker)
+2. In Discord, run `/start-jam` and select the device
+3. `/add <song>` or `/add-playlist <link>` to queue music
+
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DISCORD_TOKEN` | Yes | Discord bot token |
+| `DISCORD_CLIENT_ID` | Yes | Discord application client ID |
+| `SPOTIFY_CLIENT_ID` | Yes | Spotify app client ID |
+| `SPOTIFY_CLIENT_SECRET` | Yes | Spotify app client secret |
+| `SPOTIFY_REFRESH_TOKEN` | Yes* | Spotify OAuth refresh token (*not needed for initial setup mode) |
+| `BASE_URL` | No | Public URL for OAuth callback (e.g. `https://your-app.zeabur.app`) |
+| `PORT` | No | HTTP server port (default: `3000`) |
 
 ## Deploy to Zeabur
 
