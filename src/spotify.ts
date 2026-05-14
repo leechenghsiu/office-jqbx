@@ -97,13 +97,13 @@ export class SpotifyClient {
     };
 
     return data.playlists.items
-      .filter(p => p !== null)
+      .filter(p => p?.id && p?.name)
       .map(p => ({
         id: p.id,
         name: p.name,
-        owner: p.owner.display_name,
-        trackCount: p.tracks.total,
-        image: p.images[0]?.url ?? '',
+        owner: p.owner?.display_name ?? 'Unknown',
+        trackCount: p.tracks?.total ?? 0,
+        image: p.images?.[0]?.url ?? '',
       }));
   }
 
