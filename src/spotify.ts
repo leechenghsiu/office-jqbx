@@ -81,7 +81,7 @@ export class SpotifyClient {
   }
 
   async searchPlaylists(query: string, limit = 5): Promise<Array<{ id: string; name: string; owner: string; trackCount: number; image: string }>> {
-    const res = await this.request('GET', `/search?q=${encodeURIComponent(query)}&type=playlist&limit=${limit}`);
+    const res = await this.request('GET', `/search?q=${encodeURIComponent(query)}&type=playlist&limit=20`);
     if (!res.ok) return [];
 
     const data = await res.json() as {
@@ -97,7 +97,8 @@ export class SpotifyClient {
     };
 
     return data.playlists.items
-      .filter(p => p?.id && p?.name)
+      .filter(p => p?.id && p?.name && (p.tracks?.total ?? 0) > 0)
+      .slice(0, limit)
       .map(p => ({
         id: p.id,
         name: p.name,
