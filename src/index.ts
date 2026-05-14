@@ -22,12 +22,21 @@ const required = (name: string): string => {
 };
 
 async function main() {
-  const discordToken = required('DISCORD_TOKEN');
-  const discordClientId = required('DISCORD_CLIENT_ID');
   const spotifyClientId = required('SPOTIFY_CLIENT_ID');
   const spotifyClientSecret = required('SPOTIFY_CLIENT_SECRET');
-  const spotifyRefreshToken = required('SPOTIFY_REFRESH_TOKEN');
   const port = parseInt(process.env.PORT ?? '3000', 10);
+  const spotifyRefreshToken = process.env.SPOTIFY_REFRESH_TOKEN;
+
+  createServer(spotifyClientId, spotifyClientSecret, port, process.env.BASE_URL);
+
+  if (!spotifyRefreshToken) {
+    console.log('SPOTIFY_REFRESH_TOKEN not set.');
+    console.log(`Visit ${process.env.BASE_URL ?? `http://127.0.0.1:${port}`}/auth to authorize and get your refresh token.`);
+    return;
+  }
+
+  const discordToken = required('DISCORD_TOKEN');
+  const discordClientId = required('DISCORD_CLIENT_ID');
 
   const rotation = new Rotation();
   const spotify = new SpotifyClient(spotifyClientId, spotifyClientSecret, spotifyRefreshToken);
@@ -107,8 +116,6 @@ async function main() {
 
   await registerCommands(discordClientId, discordToken);
   await client.login(discordToken);
-
-  createServer(spotifyClientId, spotifyClientSecret, port, process.env.BASE_URL);
 }
 
 main().catch(err => {
