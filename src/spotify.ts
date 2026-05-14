@@ -96,13 +96,15 @@ export class SpotifyClient {
       };
     };
 
-    return data.playlists.items.map(p => ({
-      id: p.id,
-      name: p.name,
-      owner: p.owner.display_name,
-      trackCount: p.tracks.total,
-      image: p.images[0]?.url ?? '',
-    }));
+    return data.playlists.items
+      .filter(p => p !== null)
+      .map(p => ({
+        id: p.id,
+        name: p.name,
+        owner: p.owner.display_name,
+        trackCount: p.tracks.total,
+        image: p.images[0]?.url ?? '',
+      }));
   }
 
   async getPlaylistTracks(playlistId: string, limit = 50): Promise<Track[]> {
@@ -171,8 +173,8 @@ export class SpotifyClient {
     return data.devices.map(d => ({ id: d.id, name: d.name, type: d.type, isActive: d.is_active }));
   }
 
-  async transferPlayback(deviceId: string): Promise<boolean> {
-    const res = await this.request('PUT', '/me/player', { device_ids: [deviceId], play: false });
+  async transferPlayback(deviceId: string, play = true): Promise<boolean> {
+    const res = await this.request('PUT', '/me/player', { device_ids: [deviceId], play });
     return res.ok;
   }
 
