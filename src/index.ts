@@ -9,6 +9,7 @@ import { nowCommand } from './commands/now.js';
 import { skipCommand } from './commands/skip.js';
 import { startJamCommand } from './commands/start-jam.js';
 import { stopJamCommand } from './commands/stop-jam.js';
+import { clearCommand } from './commands/clear.js';
 
 const required = (name: string): string => {
   const val = process.env[name];
@@ -44,6 +45,7 @@ async function main() {
     skip: skipCommand(spotify),
     'start-jam': startJamCommand(spotify),
     'stop-jam': stopJamCommand(spotify),
+    clear: clearCommand(spotify),
   };
 
   client.on(Events.InteractionCreate, async interaction => {

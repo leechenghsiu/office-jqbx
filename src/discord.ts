@@ -23,6 +23,7 @@ const commands = [
   new SlashCommandBuilder().setName('queue').setDescription('View the current queue'),
   new SlashCommandBuilder().setName('now').setDescription('Show the currently playing song'),
   new SlashCommandBuilder().setName('skip').setDescription('Skip the current song'),
+  new SlashCommandBuilder().setName('clear').setDescription('Clear all songs from the queue'),
 ];
 
 export async function registerCommands(clientId: string, token: string): Promise<void> {

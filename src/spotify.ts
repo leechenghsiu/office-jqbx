@@ -169,6 +169,13 @@ export class SpotifyClient {
     return res.ok;
   }
 
+  async play(uri: string, positionMs?: number): Promise<boolean> {
+    const body: Record<string, unknown> = { uris: [uri] };
+    if (positionMs !== undefined) body.position_ms = positionMs;
+    const res = await this.request('PUT', '/me/player/play', body);
+    return res.ok;
+  }
+
   async getCurrentlyPlaying(): Promise<{
     track: Track;
     progressMs: number;
