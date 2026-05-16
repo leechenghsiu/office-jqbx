@@ -61,7 +61,7 @@ export function addArtistCommand(spotify: SpotifyClient) {
         .setColor(0xFEE75C);
       await selectInteraction.update({ embeds: [loadingEmbed], components: [] });
 
-      const tracks = await spotify.searchArtistTracks(artist.name);
+      const tracks = await spotify.getArtistTopTracks(artist.id);
       let added = 0;
       for (const track of tracks) {
         const ok = await spotify.addToQueue(track.uri);
